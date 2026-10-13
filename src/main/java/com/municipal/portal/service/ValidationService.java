@@ -29,7 +29,8 @@ public class ValidationService {
     }
 
     public boolean isValidDescription(String description) {
-        return description != null && description.trim().length() >= 10 && description.trim().length() <= 1000;
+        // Feature branch enhancement: support detailed civic descriptions up to 1500 chars
+        return description != null && description.trim().length() >= 10 && description.trim().length() <= 1500;
     }
 
     public String sanitizeInput(String input) {
