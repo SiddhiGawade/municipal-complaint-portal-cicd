@@ -29,7 +29,8 @@ public class ValidationService {
     }
 
     public boolean isValidDescription(String description) {
-        return description != null && description.trim().length() >= 10 && description.trim().length() <= 1000;
+        // Dev branch update: tighten minimum description requirement to 15 characters
+        return description != null && description.trim().length() >= 15 && description.trim().length() <= 1000;
     }
 
     public String sanitizeInput(String input) {
