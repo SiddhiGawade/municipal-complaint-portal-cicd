@@ -1,93 +1,149 @@
-# CI/CD Pipeline for a Municipal Complaint Portal
+# 🏛️ Municipal Complaint Portal (CI/CD Pipeline Project)
 
-**TOPIC:** CI/CD Pipeline for a Municipal Complaint Portal
+[![Java](https://img.shields.io/badge/Java-17%20%7C%2022-ED8B00?style=flat&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
+[![Maven](https://img.shields.io/badge/Build-Maven%203.10-C71A36?style=flat&logo=apache-maven&logoColor=white)](https://maven.apache.org/)
+[![Jenkins](https://img.shields.io/badge/CI%2FCD-Jenkins%20Pipeline-D24939?style=flat&logo=jenkins&logoColor=white)](https://www.jenkins.io/)
+[![Docker](https://img.shields.io/badge/Container-Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Ansible](https://img.shields.io/badge/IaC-Ansible-EE0000?style=flat&logo=ansible&logoColor=white)](https://www.ansible.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
-
-### TASK 1: Problem Definition and Scope
-Study the real-time need for the Municipal Complaint Portal. Identify target users, existing pain points, stakeholders, constraints and measurable success criteria. Freeze a small 15-Task MVP scope.  
-**Deliverable:** Problem statement, stakeholder list, objectives, constraints and approved MVP scope.
-
----
-
-### TASK 2: Agile Planning and DevOps Workflow
-Create user stories and acceptance criteria for the Municipal Complaint Portal. Prepare a product backlog, 15-Task Kanban/Scrum plan, Definition of Done and a DevOps lifecycle diagram from development to operations.  
-**Deliverable:** Backlog, task board, sprint plan, Definition of Done and DevOps workflow diagram.
+An enterprise-grade, civic grievance redressal web application backed by an automated end-to-end DevOps CI/CD pipeline. The project demonstrates modern software engineering workflows: Agile planning, Git branching, automated compilation, continuous testing quality gates, containerized deployment, and idempotent infrastructure provisioning.
 
 ---
 
-### TASK 3: Requirements, Architecture and Technology Setup
-Design the minimum application architecture for the Municipal Complaint Portal. The MVP should cover request submission, document/data validation, reviewer action, approval/rejection and status tracking. Select the programming stack, Maven/Gradle/Ant build tool, database if required, Tomcat/Nginx deployment target and local development setup.  
-**Deliverable:** SRS summary, use-case diagram, architecture diagram, data model/API list and working local setup.
+## 📋 Table of Contents
+- [Project Overview](#-project-overview)
+- [Repository URL & SCM](#-repository-url--scm)
+- [System Architecture](#-system-architecture)
+- [Folder Structure](#-folder-structure)
+- [Prerequisites & Stack](#-prerequisites--stack)
+- [Build and Run Locally](#-build-and-run-locally)
+- [REST API Catalog](#-rest-api-catalog)
+- [Branching & Commit Guidelines](#-branching--commit-guidelines)
+- [15-Task DevOps Roadmap](#-15-task-devops-roadmap)
 
 ---
 
-### TASK 4: Git and GitHub Repository Initialization
-Create a GitHub repository for the Municipal Complaint Portal. Add README, .gitignore, folder structure, issue templates and branch naming rules. Commit the initial application skeleton using meaningful commit messages.  
-**Deliverable:** Repository URL, README, initial commits, issues and branch policy.
+## 🏛️ Project Overview
+The Municipal Complaint Portal enables citizens to register civic grievances (such as potholes, solid waste overflow, water leakages, and malfunctioning streetlights) and receive real-time, deterministic tracking tokens (`CMP-2026-XXXX`). Municipal officials triage submissions through an administrative reviewer dashboard, enforcing transparent SLAs and auditability.
+
+### Core Workflows:
+1. **Citizen Grievance Submission:** Multi-category input, ward selection, description, and photo upload.
+2. **Automated Input Validation:** Client/server-side regex checking, anti-XSS sanitization, and 5MB attachment enforcement.
+3. **Reviewer Decision Triage:** Authenticated workflow to inspect evidence and mark complaints as `APPROVED`, `IN_PROGRESS`, or `REJECTED` with mandatory remarks.
+4. **Public Status Tracking:** Fast token lookup returning live status badges and official notes.
+5. **DevOps Telemetry:** Automated health probe at `/api/health`.
 
 ---
 
-### TASK 5: Feature Development with Branching
-Implement the first core workflow of the Municipal Complaint Portal on a feature branch. Use add, commit, push, pull and logs. Raise a pull request, review changes and merge into the development branch.  
-**Deliverable:** Working feature 1, feature branch, pull request, review comments and merge evidence.
+## 🔗 Repository URL & SCM
+- **Remote Repository:** [https://github.com/SiddhiGawade/municipal-complaint-portal-cicd.git](https://github.com/SiddhiGawade/municipal-complaint-portal-cicd.git)
+- **Primary Branches:** `main` (Production release), `dev` (Integration)
+- **Issue Templates:** Configured under `.github/ISSUE_TEMPLATE/`
 
 ---
 
-### TASK 6: MVP Completion and Git Collaboration
-Implement the remaining essential MVP functions for the Municipal Complaint Portal: request submission, document/data validation, reviewer action, approval/rejection and status tracking. Demonstrate a second feature branch, conflict creation/resolution, tagging and a release-ready source baseline.  
-**Deliverable:** Functional MVP, resolved merge conflict, tagged version and updated backlog.
+## 🏗️ System Architecture
+The application employs a 4-Tier Layered Architecture:
+```
+[ Web Browser Client (HTML5 / CSS3 / Vanilla JS) ]
+                     │  HTTP / REST JSON
+                     ▼
+[ Controller Layer (App.java: /api/complaints, /api/health) ]
+                     │
+                     ▼
+[ Service & Validation Layer (ComplaintService, ValidationService) ]
+                     │
+                     ▼
+[ Data Persistence Layer (Concurrent Repository / Pluggable DB) ]
+```
 
 ---
 
-### TASK 7: Jenkins Installation and Continuous Integration Job
-Install and configure Jenkins. Connect the Municipal Complaint Portal GitHub repository and create a Maven/Gradle/Ant build job triggered by commit or scheduled polling. Archive the build artefact.  
-**Deliverable:** Configured Jenkins job, successful build log, trigger evidence and archived artefact.
+## 📁 Folder Structure
+```
+municipal-complaint-portal-cicd/
+├── .github/
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md             # Issue template for reporting bugs
+│       └── feature_request.md        # Issue template for proposed enhancements
+├── .gitignore                        # Git exclusion rules for Java, Maven, IDEs
+├── BRANCHING_POLICY.md               # Git branching rules, PR workflow, Conventional Commits
+├── README.md                         # Primary project documentation
+├── TASKS.md                          # 15-Task DevOps Curriculum Specifications
+├── pom.xml                           # Apache Maven declarative project object model
+├── src/
+│   ├── main/
+│   │   └── java/
+│   │       └── com/municipal/portal/
+│   │           ├── App.java                  # Embedded server & HTTP endpoint routing
+│   │           ├── model/
+│   │           │   ├── Complaint.java        # Core complaint entity
+│   │           │   └── ComplaintStatus.java  # Lifecycle enum
+│   │           └── service/
+│   │               ├── ComplaintService.java # Business operations & state persistence
+│   │               └── ValidationService.java# Anti-XSS and regex validation
+│   └── test/
+│       └── java/
+│           └── com/municipal/portal/
+│               └── ComplaintServiceTest.java # JUnit 5 automated test suite
+└── TASKS_REPORTS/                    # Lab assignment docx reports & architecture diagrams
+```
 
 ---
 
-### TASK 8: Pipeline as Code and Server Deployment
-Create a Jenkinsfile for the Municipal Complaint Portal with checkout, build, package and deploy stages. Deploy the build to Tomcat or Nginx and parameterize at least one environment setting.  
-**Deliverable:** Jenkinsfile, successful pipeline run, deployed application URL/screenshot and configuration evidence.
+## ⚙️ Prerequisites & Stack
+- **JDK:** Java SE 17 or 22+
+- **Build Tool:** Apache Maven 3.10+
+- **Version Control:** Git 2.48+
+- **Target Deployment:** Apache Tomcat 10 / Nginx / Docker
+- **Test Framework:** JUnit 5 & Selenium WebDriver
 
 ---
 
-### TASK 9: Selenium Test Design and Local Execution
-Identify three to five critical user journeys in the Municipal Complaint Portal. Write Selenium WebDriver test cases with assertions, test data and screenshots for failures. Execute the suite locally through Maven.  
-**Deliverable:** Test plan, Selenium scripts, local test report and failure screenshot mechanism.
+## 🚀 Build and Run Locally
+
+### 1. Build & Run Tests
+```powershell
+mvn clean test package
+```
+*Executes all JUnit 5 test suites and packages the executable JAR in `target/`.*
+
+### 2. Run Application Locally
+```powershell
+java -jar target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar
+```
+*The web portal will be accessible at [http://localhost:8080](http://localhost:8080).*
+
+### 3. Verify Health Check
+```powershell
+curl http://localhost:8080/api/health
+```
 
 ---
 
-### TASK 10: Continuous Testing in Jenkins
-Integrate the Municipal Complaint Portal Selenium suite into Jenkins. Publish test reports and configure the pipeline so failed tests stop deployment. Correct at least one deliberately introduced defect and rerun the pipeline.  
-**Deliverable:** Jenkins test report, failed pipeline evidence, defect correction commit and successful rerun.
+## 📡 REST API Catalog
+| Verb | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/health` | Service uptime and health telemetry | `200 OK` |
+| `GET` | `/api/complaints` | Retrieve all grievances for reviewer | `200 OK` |
+| `POST` | `/api/complaints` | Register a new citizen complaint | `201 Created` |
+| `GET` | `/api/complaints/track?token=...` | Query status by unique token | `200 OK / 404` |
+| `POST` | `/api/complaints/status` | Reviewer action (Approve/Reject) | `200 OK / 400` |
 
 ---
 
-### TASK 11: Docker Image and Container Lifecycle
-Create a Dockerfile for the Municipal Complaint Portal. Build and tag the image, run the container, map ports, inspect logs, stop/restart/remove containers and document the complete container lifecycle.  
-**Deliverable:** Dockerfile, image details, Docker command log and running container evidence.
+## 🌿 Branching & Commit Guidelines
+See [BRANCHING_POLICY.md](BRANCHING_POLICY.md) for full guidelines.
+- **Branch Naming:** `feature/<name>`, `bugfix/<name>`, `hotfix/<name>`
+- **Commit Messages:** Follow [Conventional Commits](https://www.conventionalcommits.org/):
+  - `feat: <description>`
+  - `fix: <description>`
+  - `docs: <description>`
+  - `test: <description>`
+  - `ci: <description>`
 
 ---
 
-### TASK 12: Jenkins-Docker Continuous Deployment
-Extend the Municipal Complaint Portal Jenkins pipeline to build a versioned Docker image, publish it to Docker Hub or a local registry and deploy a fresh container automatically after successful tests.  
-**Deliverable:** Versioned image, registry evidence and end-to-end commit-to-container pipeline.
-
----
-
-### TASK 13: Configuration Management Script
-Identify all server prerequisites for the Municipal Complaint Portal: packages, users, folders, files, ports and services. Create either a Puppet manifest/modules or an Ansible inventory and YAML playbook to configure the target node.  
-**Deliverable:** Configuration specification, Puppet manifest or Ansible playbook and first execution log.
-
----
-
-### TASK 14: Automated Provisioning and Reliability Validation
-Provision a clean target environment for the Municipal Complaint Portal using Puppet/Ansible. Deploy the application or container, rerun the automation to demonstrate idempotency, perform a health check and test rollback/recovery to the previous stable release.  
-**Deliverable:** Provisioned node, idempotency evidence, health-check result and rollback/recovery demonstration.
-
----
-
-### TASK 15: Final End-to-End Release, Documentation and Viva
-Run the complete Municipal Complaint Portal DevOps workflow from Git commit to Jenkins build, Selenium quality gate, Docker deployment and Puppet/Ansible provisioning. Complete technical documentation, architecture, troubleshooting guide, limitations and future enhancement plan.  
-**Deliverable:** Final repository, live demonstration, complete report, screenshots/video, presentation and viva.
+## 🗺️ 15-Task DevOps Roadmap
+Detailed task objectives and deliverables can be found in [TASKS.md](TASKS.md).
