@@ -133,6 +133,17 @@ curl http://localhost:8080/api/health
 
 ---
 
+## ⚙️ Continuous Integration (Jenkins CI)
+The portal is continuously integrated using a dedicated Jenkins CI automation job:
+- **Job Identifier:** `Municipal-Complaint-Portal-CI`
+- **SCM Integration:** Git checkout tracking `refs/remotes/origin/dev`
+- **Automated Trigger:** SCM Polling (`H/5 * * * *`) and commit-driven webhooks
+- **Build Lifecycle:** Apache Maven 3.10 with OpenJDK (`clean package`)
+- **Automated Test Gate:** JUnit 5 test suite executing model and service layer assertions (17 test cases, 0 failures)
+- **Artifact Archiving:** Fingerprinted production artifact `target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar`
+
+---
+
 ## 🌿 Branching & Commit Guidelines
 See [BRANCHING_POLICY.md](BRANCHING_POLICY.md) for full guidelines.
 - **Branch Naming:** `feature/<name>`, `bugfix/<name>`, `hotfix/<name>`
