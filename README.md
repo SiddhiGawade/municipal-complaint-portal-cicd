@@ -158,6 +158,14 @@ The project defines a Declarative Pipeline as Code (`Jenkinsfile`) orchestrating
   - Health Endpoint: `http://localhost:8090/api/health` (HTTP 200 OK)
 - **Delivery Setup:** See [TASK12_JENKINS_DOCKER_DEPLOYMENT.md](TASK12_JENKINS_DOCKER_DEPLOYMENT.md) for Jenkins agent requirements, Docker Hub credentials, and evidence collection.
 
+## Ansible Provisioning and Recovery (Task 14)
+`ansible/task14.yml` imports the host baseline from `ansible/site.yml`, deploys a
+tagged container image, verifies backend and Nginx health, and restores the
+previous image if a candidate fails. See
+[ansible/TASK14_RUNBOOK.md](ansible/TASK14_RUNBOOK.md) for controller setup,
+idempotency verification, and the controlled rollback rehearsal. Replace the
+reserved inventory address before targeting a real Linux node.
+
 ---
 
 ## 🌿 Branching & Commit Guidelines
