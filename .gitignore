@@ -51,3 +51,6 @@ test_*.docx
 jenkins/
 jenkins_home/
 nul
+
+# Deployment runtime directories
+deploy/*/

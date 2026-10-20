@@ -1,12 +1,5 @@
 package com.municipal.portal;
 
-import com.municipal.portal.model.Complaint;
-import com.municipal.portal.model.ComplaintStatus;
-import com.municipal.portal.service.ComplaintService;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -14,19 +7,49 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import com.municipal.portal.model.Complaint;
+import com.municipal.portal.model.ComplaintStatus;
+import com.municipal.portal.service.ComplaintService;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
 public class App {
 
-    private static final int PORT = 8080;
+    private static final int DEFAULT_PORT = 8085;
     private static final ComplaintService service = new ComplaintService();
 
+    private static int resolvePort(String[] args) {
+        if (args != null && args.length > 0) {
+            try {
+                return Integer.parseInt(args[0]);
+            } catch (NumberFormatException ignored) {}
+        }
+        String envPort = System.getenv("PORT");
+        if (envPort != null && !envPort.isBlank()) {
+            try {
+                return Integer.parseInt(envPort.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        String propPort = System.getProperty("PORT");
+        if (propPort != null && !propPort.isBlank()) {
+            try {
+                return Integer.parseInt(propPort.trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        return DEFAULT_PORT;
+    }
+
     public static void main(String[] args) throws IOException {
+        int port = resolvePort(args);
+
         // Seed initial sample complaints for reviewer workflow demonstration
         service.submitComplaint("Rahul Deshmukh", "9820011223", "Roads & Potholes", "Ward 07",
                 "Deep pothole near SV Road junction causing hazard to two-wheelers.", "road_pothole.jpg");
         service.submitComplaint("Sunita Kamble", "9833445566", "Solid Waste Management", "Ward 12",
                 "Uncollected municipal garbage bins overflowing for 3 days.", null);
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
         // API Endpoints
         server.createContext("/api/health", new HealthHandler());
@@ -38,8 +61,8 @@ public class App {
         server.setExecutor(null); // default executor
         System.out.println("=================================================");
         System.out.println(" Municipal Complaint Portal - Working Local Setup");
-        System.out.println(" Server running at: http://localhost:" + PORT);
-        System.out.println(" Health Check:      http://localhost:" + PORT + "/api/health");
+        System.out.println(" Server running at: http://localhost:" + port);
+        System.out.println(" Health Check:      http://localhost:" + port + "/api/health");
         System.out.println("=================================================");
         server.start();
     }
