@@ -144,6 +144,24 @@ The portal is continuously integrated using a dedicated Jenkins CI automation jo
 
 ---
 
+## 🚀 Pipeline as Code & Server Deployment (Jenkinsfile & Nginx)
+The project defines a Declarative Pipeline as Code (`Jenkinsfile`) orchestrating automated delivery:
+- **Pipeline Identifier:** `Municipal-Complaint-Portal-Pipeline`
+- **Four Sequential Stages:**
+  1. `Checkout`: SCM checkout tracking `refs/remotes/origin/dev`
+  2. `Build`: Maven clean compilation of Java sources
+  3. `Package`: Automated test gating (17 JUnit 5 tests) and JAR packaging
+  4. `Deploy`: Automated server deployment to Nginx reverse proxy web server
+- **Environment Parameterization:**
+  - `DEPLOY_ENV`: Choice parameter (`staging`, `production`, `development`)
+  - `APP_PORT`: Backend application port (default `8085`)
+  - `NGINX_PORT`: Nginx public ingress port (default `8090`)
+- **Automated Verification:**
+  - Staging Ingress: `http://localhost:8090/`
+  - Health Endpoint: `http://localhost:8090/api/health` (HTTP 200 OK)
+
+---
+
 ## 🌿 Branching & Commit Guidelines
 See [BRANCHING_POLICY.md](BRANCHING_POLICY.md) for full guidelines.
 - **Branch Naming:** `feature/<name>`, `bugfix/<name>`, `hotfix/<name>`
