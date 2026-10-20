@@ -7,6 +7,11 @@ pipeline {
         string(name: 'NGINX_PORT', defaultValue: '8090', description: 'Nginx Front-Facing Reverse Proxy Web Server Port')
     }
 
+    environment {
+        BUILD_ID = 'dontKillMe'
+        JENKINS_NODE_COOKIE = 'dontKillMe'
+    }
+
     stages {
         stage('Checkout') {
             steps {
