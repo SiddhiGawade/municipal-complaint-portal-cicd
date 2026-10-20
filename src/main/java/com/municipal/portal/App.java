@@ -101,8 +101,7 @@ public class App {
 
                 try {
                     Complaint created = service.submitComplaint(name, contact, category, ward, desc, null);
-                    // Deliberate Defect (Task 10): API contract deviation from 'SUCCESS' to 'PENDING_CONFIRMATION'
-                    String resp = String.format("{\"token\":\"%s\",\"status\":\"PENDING_CONFIRMATION\",\"message\":\"Complaint Registered Successfully\"}", created.getToken());
+                    String resp = String.format("{\"token\":\"%s\",\"status\":\"SUCCESS\",\"message\":\"Complaint Registered Successfully\"}", created.getToken());
                     sendResponse(exchange, 201, "application/json", resp);
                 } catch (Exception e) {
                     sendResponse(exchange, 400, "application/json", "{\"error\":\"" + e.getMessage() + "\"}");
