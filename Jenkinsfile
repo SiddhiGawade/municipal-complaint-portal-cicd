@@ -36,17 +36,26 @@ pipeline {
         stage('Package') {
             steps {
                 echo "================================================="
-                echo " Stage 3: Package - Executing Tests & Creating JAR"
+                echo " Stage 3: Package - Executing Unit Tests & Creating JAR"
                 echo "================================================="
                 bat 'cmd.exe /C "mvn test package"'
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true, onlyIfSuccessful: true
             }
         }
 
+        stage('Selenium Integration Tests') {
+            steps {
+                echo "================================================="
+                echo " Stage 4: Selenium Integration Tests - Headless E2E"
+                echo "================================================="
+                bat 'cmd.exe /C "mvn failsafe:integration-test failsafe:verify -Pselenium"'
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo "================================================="
-                echo " Stage 4: Deploy - Deploying Application to Nginx"
+                echo " Stage 5: Deploy - Deploying Application to Nginx"
                 echo " Target Environment : ${params.DEPLOY_ENV}"
                 echo " Backend Port       : ${params.APP_PORT}"
                 echo " Nginx Proxy Port   : ${params.NGINX_PORT}"
@@ -59,9 +68,16 @@ pipeline {
     }
 
     post {
+        always {
+            echo "================================================="
+            echo " [Test Quality Gate] Publishing JUnit & Failsafe Reports"
+            echo "================================================="
+            junit testResults: '**/target/surefire-reports/*.xml, **/target/failsafe-reports/*.xml', allowEmptyResults: true
+        }
         success {
             echo "================================================="
             echo " [CI/CD SUCCESS] Pipeline Completed Successfully!"
+            echo " All Quality Gates Passed (Unit & Selenium Tests)!"
             echo " Deployed Application URL : http://localhost:${params.NGINX_PORT}/"
             echo " Health Check Endpoint   : http://localhost:${params.NGINX_PORT}/api/health"
             echo " Deployed Environment    : ${params.DEPLOY_ENV}"
@@ -69,7 +85,7 @@ pipeline {
         }
         failure {
             echo "================================================="
-            echo " [CI/CD FAILURE] Pipeline Failed during execution."
+            echo " [CI/CD FAILURE] Quality Gate Failed! Deployment stopped due to test failure."
             echo "================================================="
         }
     }
