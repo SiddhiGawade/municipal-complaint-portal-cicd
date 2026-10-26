@@ -1,0 +1,11 @@
+Task 15 validation evidence
+Captured: 2026-10-20T14:04:16+05:30
+Git: dev @ abc900735330
+Unit: 17 tests, 0 failures, 0 errors, 0 skipped
+Selenium: 5 tests, 0 failures, 0 errors, 0 skipped
+Local loopback application health: HTTP 200, status UP
+Existing localhost backend :8085 and Nginx ingress :8090: HTTP 200 (read-only probes; deployment provenance unverified)
+Docker build/push: NOT RUN (base images not cached; external pull not authorized)
+Remote Ansible provisioning: NOT RUN (Ansible unavailable; inventory is reserved placeholder)
+Historical Jenkins build #6: SUCCESS at 9aa2e01; predates Docker pipeline commit
+See Task15_validation.json for scope and machine-readable details.

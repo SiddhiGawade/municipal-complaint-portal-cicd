@@ -1,0 +1,14 @@
+.git
+.github
+.idea
+.vscode
+target
+jenkins
+jenkins_home
+deploy
+TASKS_REPORTS
+__pycache__
+*.pyc
+*.log
+build_task*.py
+generate*.py

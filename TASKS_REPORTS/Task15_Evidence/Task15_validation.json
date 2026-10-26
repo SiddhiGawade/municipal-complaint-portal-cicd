@@ -1,0 +1,46 @@
+{
+  "captured_at": "2026-10-20T14:04:16+05:30",
+  "branch": "dev",
+  "head": "abc900735330",
+  "unit_tests": {
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 3
+  },
+  "selenium_tests": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 1
+  },
+  "ansible_playbook_available": false,
+  "ansible_yaml_parse": "PASS (PyYAML parsed site, task14, health_checks, requirements)",
+  "inventory_target": "192.0.2.10 (reserved documentation address)",
+  "remote_ansible_apply": false,
+  "docker_base_images_cached": false,
+  "docker_build_or_publish": false,
+  "docker_build_context_tracked_at_head": false,
+  "docker_build_context_status": "Dockerfile and .dockerignore absent from HEAD",
+  "local_application_smoke": {
+    "http_status": 200,
+    "health": "UP",
+    "scope": "temporary loopback JAR process; not a Docker/Nginx deployment",
+    "screenshot": "Task15_local_live_portal.png"
+  },
+  "existing_local_listeners": {
+    "backend_8085": "HTTP 200, status UP",
+    "nginx_8090": "HTTP 200, status UP",
+    "scope": "read-only local probes; deployment provenance not verified"
+  },
+  "jenkins_historical_run": {
+    "job": "Municipal-Complaint-Portal-Pipeline #6",
+    "checkout": "9aa2e01",
+    "result": "SUCCESS",
+    "scope": "17 unit + 5 Selenium; earlier native JAR/Nginx deployment",
+    "current_docker_pipeline_verified": false
+  },
+  "screen_recording": "not captured"
+}

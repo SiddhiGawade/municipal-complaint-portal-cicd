@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A municipal complaint workspace and interactive, evidence-backed DevOps learning showcase.">
+  <title>CivicFlow | Municipal Complaint Portal</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="#overview"><span class="brand-mark" data-icon="building"></span><span>CivicFlow<small>MUNICIPAL WORKSPACE</small></span></a>
+    <div class="workspace-label"><span class="workspace-dot"></span> Municipal Complaint Portal</div>
+    <p class="nav-label">WORKSPACE</p>
+    <nav>
+      <a href="#overview" data-route="overview"><span data-icon="grid"></span>Overview</a>
+      <a href="#complaints" data-route="complaints"><span data-icon="inbox"></span>Complaints<span class="nav-count" id="nav-count">—</span></a>
+      <a href="#submit" data-route="submit"><span data-icon="plus"></span>Submit complaint</a>
+      <a href="#track" data-route="track"><span data-icon="search"></span>Track status</a>
+    </nav>
+    <p class="nav-label">BUILD & LEARN</p>
+    <nav>
+      <a href="#devops" data-route="devops"><span data-icon="workflow"></span>DevOps Lab<span class="new-label">EXPLORE</span></a>
+      <a href="#tasks" data-route="tasks"><span data-icon="book"></span>Tasks & reports<span class="nav-count">15</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="environment-card"><span data-icon="terminal"></span><strong>Built to learn. Built to demo.</strong><p>Java · Jenkins · Docker · Ansible</p><span class="environment-line">In-memory learning environment</span></div>
+      <div class="viewer"><span class="avatar">DV</span><span><strong>Demo viewer</strong><small>Local workspace · no sign-in</small></span></div>
+    </div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-menu" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar"><span data-icon="menu"></span></button>
+      <div class="breadcrumb">Workspace<span>/</span><strong id="breadcrumb">Overview</strong></div>
+      <form class="global-search" id="global-search" role="search"><span data-icon="search"></span><label class="sr-only" for="global-query">Search complaints</label><input id="global-query" placeholder="Search complaints..." maxlength="100"><kbd>/</kbd></form>
+      <div class="health-pill" id="health-pill"><span class="dot"></span><span>Checking service</span></div>
+      <a class="topbar-guide" href="#devops"><span data-icon="play"></span>Demo guide</a>
+    </header>
+    <main id="main" tabindex="-1"><div id="view"><div class="loading-state">Loading your workspace…</div></div></main>
+    <footer class="footer"><span>CivicFlow <span class="muted">/</span> Municipal Complaint Portal</span><span>From civic issue to continuous delivery.</span></footer>
+  </div>
+  <dialog id="complaint-dialog" class="detail-dialog" aria-labelledby="detail-title"></dialog>
+  <dialog id="image-dialog" class="image-dialog" aria-label="Evidence image preview"></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

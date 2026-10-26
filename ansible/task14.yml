@@ -1,0 +1,146 @@
+---
+- name: Provision and deploy the Municipal Complaint Portal
+  ansible.builtin.import_playbook: site.yml
+
+- name: Deploy and validate the portal release
+  hosts: municipal_portal
+  become: true
+  gather_facts: false
+
+  vars:
+    portal_backend_host: "127.0.0.1"
+    portal_backend_port: 8085
+    portal_container_port: 8085
+    portal_public_port: 8090
+    portal_container_name: "municipal-complaint-portal"
+    portal_health_retries: 15
+    portal_health_delay: 2
+    portal_test_rollback: false
+
+  pre_tasks:
+    - name: Require a tagged, immutable candidate image reference
+      ansible.builtin.assert:
+        that:
+          - portal_image is defined
+          - portal_image is string
+          - portal_image | length > 0
+          - portal_image is match('^.+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$')
+          - portal_image.split(':')[-1] != 'latest'
+        fail_msg: >-
+          Set portal_image to a versioned image tag, for example
+          registry.example/municipal-complaint-portal:1.0.0-42-a1b2c3d4e5f6.
+          The mutable latest tag is not accepted.
+
+    - name: Validate deployment ports
+      ansible.builtin.assert:
+        that:
+          - portal_backend_port | int > 0
+          - portal_backend_port | int < 65536
+          - portal_container_port | int > 0
+          - portal_container_port | int < 65536
+          - portal_public_port | int > 0
+          - portal_public_port | int < 65536
+          - portal_backend_port | int != portal_public_port | int
+        fail_msg: "Backend, container, and public ports must be valid TCP ports."
+
+  tasks:
+    - name: Inspect the currently running portal release
+      community.docker.docker_container_info:
+        name: "{{ portal_container_name }}"
+      register: portal_existing_container
+
+    - name: Record the current stable image reference and immutable image ID
+      ansible.builtin.set_fact:
+        portal_previous_image: >-
+          {{ portal_existing_container.container.Config.Image
+             if portal_existing_container.exists else '' }}
+        portal_previous_image_id: >-
+          {{ portal_existing_container.container.Image
+             if portal_existing_container.exists else '' }}
+
+    - name: Require an existing stable release for rollback rehearsal
+      ansible.builtin.assert:
+        that:
+          - portal_existing_container.exists
+          - portal_previous_image != portal_image
+        fail_msg: >-
+          Rollback rehearsal requires an existing container on a different
+          image tag. First deploy a stable release, then test a different
+          candidate tag.
+      when: portal_test_rollback | bool
+
+    - name: Pull the requested release before changing the running container
+      community.docker.docker_image:
+        name: "{{ portal_image }}"
+        source: pull
+        state: present
+
+    - name: Deploy the candidate release and recover the previous image on failure
+      block:
+        - name: Run the candidate portal container
+          community.docker.docker_container:
+            name: "{{ portal_container_name }}"
+            image: "{{ portal_image }}"
+            state: started
+            restart_policy: unless-stopped
+            published_ports:
+              - "{{ portal_backend_host }}:{{ portal_backend_port }}:{{ portal_container_port }}"
+            env:
+              PORT: "{{ portal_container_port | string }}"
+            labels:
+              com.municipal-portal.managed-by: ansible
+              com.municipal-portal.image: "{{ portal_image }}"
+            comparisons:
+              image: strict
+
+        - name: Verify backend and reverse-proxy health
+          ansible.builtin.include_tasks: health_checks.yml
+
+        - name: Deliberately reject a healthy candidate for rollback rehearsal
+          ansible.builtin.fail:
+            msg: "Intentional Task 14 rollback rehearsal."
+          when: portal_test_rollback | bool
+
+        - name: Report the healthy deployed release
+          ansible.builtin.debug:
+            msg: >-
+              Release {{ portal_image }} is healthy on the backend and through
+              Nginx.
+          when: not (portal_test_rollback | bool)
+
+      rescue:
+        - name: Restore the exact previously running image
+          community.docker.docker_container:
+            name: "{{ portal_container_name }}"
+            image: "{{ portal_previous_image_id }}"
+            state: started
+            restart_policy: unless-stopped
+            published_ports:
+              - "{{ portal_backend_host }}:{{ portal_backend_port }}:{{ portal_container_port }}"
+            env:
+              PORT: "{{ portal_container_port | string }}"
+            labels:
+              com.municipal-portal.managed-by: ansible
+              com.municipal-portal.image: "{{ portal_previous_image }}"
+            comparisons:
+              image: strict
+          when: portal_previous_image_id | length > 0
+
+        - name: Remove the rejected first release when no previous release exists
+          community.docker.docker_container:
+            name: "{{ portal_container_name }}"
+            state: absent
+          when: portal_previous_image_id | length == 0
+
+        - name: Verify health after restoring the stable release
+          ansible.builtin.include_tasks: health_checks.yml
+          when: portal_previous_image_id | length > 0
+
+        - name: Confirm rollback and keep the deployment failure visible
+          ansible.builtin.fail:
+            msg: >-
+              Candidate {{ portal_image }} failed validation
+              ({{ ansible_failed_result.msg | default('rollback rehearsal') }}).
+              Recovery restored {{ portal_previous_image | default('no prior release') }};
+              see the preceding health checks. The play intentionally exits
+              unsuccessfully so a failed candidate cannot pass a deployment gate.

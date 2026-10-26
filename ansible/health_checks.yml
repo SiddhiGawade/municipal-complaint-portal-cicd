@@ -1,0 +1,28 @@
+---
+- name: Wait for the portal backend health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ portal_backend_port }}/api/health"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: portal_backend_health
+  until: >-
+    portal_backend_health.status | default(0) | int == 200 and
+    portal_backend_health.json.status | default('') == 'UP'
+  retries: "{{ portal_health_retries }}"
+  delay: "{{ portal_health_delay }}"
+  changed_when: false
+
+- name: Wait for the portal through the Nginx ingress
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ portal_public_port }}/api/health"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: portal_proxy_health
+  until: >-
+    portal_proxy_health.status | default(0) | int == 200 and
+    portal_proxy_health.json.status | default('') == 'UP'
+  retries: "{{ portal_health_retries }}"
+  delay: "{{ portal_health_delay }}"
+  changed_when: false

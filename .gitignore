@@ -46,3 +46,11 @@ __pycache__/
 *.pyc
 *.pyo
 test_*.docx
+
+# Jenkins local runtime
+jenkins/
+jenkins_home/
+nul
+
+# Deployment runtime directories
+deploy/*/

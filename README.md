@@ -113,11 +113,11 @@ mvn clean test package
 ```powershell
 java -jar target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar
 ```
-*The web portal will be accessible at [http://localhost:8080](http://localhost:8080).*
+*The web portal will be accessible at [http://localhost:8085](http://localhost:8085).*
 
 ### 3. Verify Health Check
 ```powershell
-curl http://localhost:8080/api/health
+curl http://localhost:8085/api/health
 ```
 
 ---
@@ -130,6 +130,86 @@ curl http://localhost:8080/api/health
 | `POST` | `/api/complaints` | Register a new citizen complaint | `201 Created` |
 | `GET` | `/api/complaints/track?token=...` | Query status by unique token | `200 OK / 404` |
 | `POST` | `/api/complaints/status` | Reviewer action (Approve/Reject) | `200 OK / 400` |
+
+---
+
+## ⚙️ Continuous Integration (Jenkins CI)
+The portal is continuously integrated using a dedicated Jenkins CI automation job:
+- **Job Identifier:** `Municipal-Complaint-Portal-CI`
+- **SCM Integration:** Git checkout tracking `refs/remotes/origin/dev`
+- **Automated Trigger:** SCM Polling (`H/5 * * * *`) and commit-driven webhooks
+- **Build Lifecycle:** Apache Maven 3.10 with OpenJDK (`clean package`)
+- **Automated Test Gate:** JUnit 5 test suite executing model and service layer assertions (17 test cases, 0 failures)
+- **Artifact Archiving:** Fingerprinted production artifact `target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar`
+
+---
+
+## 🚀 Pipeline as Code & Server Deployment (Jenkinsfile & Nginx)
+The project defines a Declarative Pipeline as Code (`Jenkinsfile`) orchestrating automated delivery:
+- **Pipeline Identifier:** `Municipal-Complaint-Portal-Pipeline`
+- **Delivery Stages:** Checkout, compile/package, unit tests, Selenium integration tests, versioned Docker build, Docker Hub publish, and fresh-container deployment
+- **Environment Parameterization:**
+  - `DEPLOY_ENV`: Choice parameter (`staging`, `production`, `development`)
+  - `APP_PORT`: Backend application port (default `8085`)
+  - `NGINX_PORT`: Nginx public ingress port (default `8090`)
+- **Image Version:** `<pom-version>-<Jenkins-build-number>-<12-character-commit>` plus a convenience `latest` tag
+- **Automated Verification:**
+  - Staging Ingress: `http://localhost:8090/`
+  - Health Endpoint: `http://localhost:8090/api/health` (HTTP 200 OK)
+- **Delivery Setup:** See [TASK12_JENKINS_DOCKER_DEPLOYMENT.md](TASK12_JENKINS_DOCKER_DEPLOYMENT.md) for Jenkins agent requirements, Docker Hub credentials, and evidence collection.
+
+## Ansible Provisioning and Recovery (Task 14)
+`ansible/task14.yml` imports the host baseline from `ansible/site.yml`, deploys a
+tagged container image, verifies backend and Nginx health, and restores the
+previous image if a candidate fails. See
+[ansible/TASK14_RUNBOOK.md](ansible/TASK14_RUNBOOK.md) for controller setup,
+idempotency verification, and the controlled rollback rehearsal. Replace the
+reserved inventory address before targeting a real Linux node.
+
+## Final Release, Evidence and Viva (Task 15)
+The Task 15 technical report, current release decision, deployment runbook,
+troubleshooting guide, limitations and enhancement plan are in
+[TASK15_FINAL_RELEASE.md](TASK15_FINAL_RELEASE.md). The report package also
+includes an architecture diagram, workflow diagram, local portal screenshot,
+machine-readable validation evidence, and the keyboard-navigable
+[viva presentation](TASKS_REPORTS/Task15_Viva_Presentation.html) with a
+[viva/demo guide](TASKS_REPORTS/Task15_Viva_QA.md).
+
+**Release status:** Local Maven tests (17/17) and Selenium journeys (5/5) pass.
+Docker registry publication and remote Ansible provisioning are pending; the
+current Dockerfile and `.dockerignore` are not yet tracked in the inspected
+Git commit, and the Ansible inventory still contains a reserved placeholder.
+See the report for evidence scope and the remaining release gates. A successful
+historical Jenkins run is not evidence that the current Docker pipeline ran.
+
+## Dashboard and DevOps Demonstration
+
+```powershell
+mvn -o package
+java -jar target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar 8085 --demo
+```
+
+Open `http://localhost:8085/`. The demo includes the dashboard, complaint queue,
+submission and tracking pages, interactive DevOps Lab, and all 15 downloadable
+task reports. No Node installation, CDN, or live Jenkins connection is needed.
+
+`--demo` (or `DEMO_MODE=true`) enables 20 synthetic records and local reviewer
+actions. Demo mode requires a loopback bind address and is not authentication.
+Without demo mode, reviewer writes are disabled. The default bind address is
+`127.0.0.1`; the Docker image sets `BIND_ADDRESS=0.0.0.0` for container networking.
+Data and complaint event history are in memory and reset on restart.
+
+The DevOps animations execute no commands. Recorded baseline results retain
+their original capture date and revision; they are not current build results.
+The report downloads are bundled copies; originals in `TASKS_REPORTS/` are
+preserved.
+
+Run verification with `mvn -o test` and `mvn -o verify -Pselenium`. On this
+Windows workspace, an offline ChromeDriver override is available:
+
+```powershell
+mvn -o verify -Pselenium "-Dwebdriver.chrome.driver=C:/Users/Student/.cache/selenium/chromedriver/win64/155.0.8059.84/chromedriver.exe"
+```
 
 ---
 
