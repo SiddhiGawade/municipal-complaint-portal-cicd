@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,25 +39,42 @@ public class ComplaintService {
 
     public Optional<Complaint> getComplaintByToken(String token) {
         if (token == null) return Optional.empty();
-        return Optional.ofNullable(complaintStore.get(token.trim().toUpperCase()));
+        return Optional.ofNullable(complaintStore.get(token.trim().toUpperCase(Locale.ROOT)));
     }
 
     public List<Complaint> getAllComplaints() {
         return new ArrayList<>(complaintStore.values());
     }
 
-    public boolean updateStatus(String token, ComplaintStatus newStatus, String remarks, String reviewerId) {
-        Complaint complaint = complaintStore.get(token);
+    public synchronized boolean updateStatus(String token, ComplaintStatus newStatus, String remarks, String reviewerId) {
+        Complaint complaint = getComplaintByToken(token).orElse(null);
         if (complaint == null) return false;
 
-        if (newStatus == ComplaintStatus.REJECTED && (remarks == null || remarks.trim().isEmpty())) {
-            throw new IllegalArgumentException("Remarks are mandatory when rejecting a complaint");
+        if (newStatus == null || !allowedTransitions(complaint.getStatus()).contains(newStatus)) {
+            throw new IllegalArgumentException("Invalid status transition from " + complaint.getStatus() + " to " + newStatus);
+        }
+        if (newStatus == ComplaintStatus.REJECTED && (remarks == null || remarks.trim().length() < 5)) {
+            throw new IllegalArgumentException("Rejection remarks are mandatory and must be at least 5 characters");
+        }
+        if (remarks != null && remarks.length() > 1500) {
+            throw new IllegalArgumentException("Remarks must be at most 1500 characters");
         }
 
         complaint.setStatus(newStatus);
         complaint.setReviewerRemarks(remarks != null ? remarks.trim() : "");
         complaint.setReviewerId(reviewerId != null ? reviewerId.trim() : "ADMIN");
+        complaint.recordEvent(complaint.getReviewerRemarks(), complaint.getReviewerId());
         return true;
+    }
+
+    public static Set<ComplaintStatus> allowedTransitions(ComplaintStatus status) {
+        return switch (status) {
+            case PENDING -> Set.of(ComplaintStatus.UNDER_REVIEW, ComplaintStatus.APPROVED, ComplaintStatus.IN_PROGRESS, ComplaintStatus.REJECTED);
+            case UNDER_REVIEW -> Set.of(ComplaintStatus.APPROVED, ComplaintStatus.IN_PROGRESS, ComplaintStatus.REJECTED);
+            case APPROVED -> Set.of(ComplaintStatus.IN_PROGRESS, ComplaintStatus.REJECTED);
+            case IN_PROGRESS -> Set.of(ComplaintStatus.RESOLVED);
+            case RESOLVED, REJECTED -> Set.of();
+        };
     }
 
     public int getTotalCount() {

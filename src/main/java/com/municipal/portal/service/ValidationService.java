@@ -12,7 +12,7 @@ public class ValidationService {
     );
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^[6-9]\\d{9}$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[^@\\s]+\\.[^@\\s]+$");
 
     public boolean isValidCategory(String category) {
         return category != null && VALID_CATEGORIES.contains(category.trim());
@@ -39,7 +39,8 @@ public class ValidationService {
     }
 
     public boolean validateComplaint(String name, String contact, String category, String ward, String description) {
-        return name != null && !name.trim().isEmpty()
+        return name != null && !name.trim().isEmpty() && name.length() <= 100
+            && contact != null && contact.length() <= 150
             && isValidContact(contact)
             && isValidCategory(category)
             && isValidWard(ward)

@@ -1,6 +1,8 @@
 package com.municipal.portal.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Complaint {
     private String token;
@@ -15,11 +17,13 @@ public class Complaint {
     private String reviewerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private final List<ComplaintEvent> history = new ArrayList<>();
 
     public Complaint() {
         this.status = ComplaintStatus.PENDING;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        history.add(new ComplaintEvent(ComplaintStatus.PENDING, "Complaint registered", "CITIZEN", createdAt));
     }
 
     public Complaint(String token, String citizenName, String citizenContact, String category, String ward, String description) {
@@ -71,4 +75,10 @@ public class Complaint {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public synchronized List<ComplaintEvent> getHistory() { return List.copyOf(history); }
+
+    public synchronized void recordEvent(String remarks, String actor) {
+        history.add(new ComplaintEvent(status, remarks, actor, updatedAt));
+    }
 }

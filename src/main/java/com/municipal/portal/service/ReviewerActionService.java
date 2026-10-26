@@ -3,7 +3,6 @@ package com.municipal.portal.service;
 import com.municipal.portal.model.Complaint;
 import com.municipal.portal.model.ComplaintStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -37,42 +36,29 @@ public class ReviewerActionService {
     }
 
     public boolean approveComplaint(String token, String reviewerId, String remarks) {
-        Complaint complaint = getComplaint(token);
-        complaint.setStatus(ComplaintStatus.APPROVED);
-        complaint.setReviewerId(reviewerId != null ? reviewerId.trim() : "CHIEF_OFFICER");
-        complaint.setReviewerRemarks(remarks != null ? remarks.trim() : "Approved for field execution");
-        complaint.setUpdatedAt(LocalDateTime.now());
-        return true;
+        getComplaint(token);
+        return complaintService.updateStatus(token, ComplaintStatus.APPROVED,
+                remarks != null ? remarks : "Approved for field execution", reviewerId);
     }
 
     public boolean rejectComplaint(String token, String reviewerId, String mandatoryRemarks) {
         if (mandatoryRemarks == null || mandatoryRemarks.trim().length() < 5) {
             throw new IllegalArgumentException("Rejection remarks are mandatory and must be at least 5 characters");
         }
-        Complaint complaint = getComplaint(token);
-        complaint.setStatus(ComplaintStatus.REJECTED);
-        complaint.setReviewerId(reviewerId != null ? reviewerId.trim() : "CHIEF_OFFICER");
-        complaint.setReviewerRemarks(mandatoryRemarks.trim());
-        complaint.setUpdatedAt(LocalDateTime.now());
-        return true;
+        getComplaint(token);
+        return complaintService.updateStatus(token, ComplaintStatus.REJECTED, mandatoryRemarks, reviewerId);
     }
 
     public boolean assignToFieldCrew(String token, String reviewerId, String crewId) {
-        Complaint complaint = getComplaint(token);
-        complaint.setStatus(ComplaintStatus.IN_PROGRESS);
-        complaint.setReviewerId(reviewerId != null ? reviewerId.trim() : "CHIEF_OFFICER");
-        complaint.setReviewerRemarks("Assigned to field maintenance unit: " + (crewId != null ? crewId.trim() : "CREW-01"));
-        complaint.setUpdatedAt(LocalDateTime.now());
-        return true;
+        getComplaint(token);
+        return complaintService.updateStatus(token, ComplaintStatus.IN_PROGRESS,
+                "Assigned to field maintenance unit: " + (crewId != null ? crewId.trim() : "CREW-01"), reviewerId);
     }
 
     public boolean resolveComplaint(String token, String reviewerId, String resolutionNotes) {
-        Complaint complaint = getComplaint(token);
-        complaint.setStatus(ComplaintStatus.RESOLVED);
-        complaint.setReviewerId(reviewerId != null ? reviewerId.trim() : "CHIEF_OFFICER");
-        complaint.setReviewerRemarks(resolutionNotes != null ? resolutionNotes.trim() : "Civic issue successfully resolved on ground");
-        complaint.setUpdatedAt(LocalDateTime.now());
-        return true;
+        getComplaint(token);
+        return complaintService.updateStatus(token, ComplaintStatus.RESOLVED,
+                resolutionNotes != null ? resolutionNotes : "Civic issue successfully resolved on ground", reviewerId);
     }
 
     private Complaint getComplaint(String token) {

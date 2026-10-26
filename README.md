@@ -113,11 +113,11 @@ mvn clean test package
 ```powershell
 java -jar target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar
 ```
-*The web portal will be accessible at [http://localhost:8080](http://localhost:8080).*
+*The web portal will be accessible at [http://localhost:8085](http://localhost:8085).*
 
 ### 3. Verify Health Check
 ```powershell
-curl http://localhost:8080/api/health
+curl http://localhost:8085/api/health
 ```
 
 ---
@@ -165,6 +165,51 @@ previous image if a candidate fails. See
 [ansible/TASK14_RUNBOOK.md](ansible/TASK14_RUNBOOK.md) for controller setup,
 idempotency verification, and the controlled rollback rehearsal. Replace the
 reserved inventory address before targeting a real Linux node.
+
+## Final Release, Evidence and Viva (Task 15)
+The Task 15 technical report, current release decision, deployment runbook,
+troubleshooting guide, limitations and enhancement plan are in
+[TASK15_FINAL_RELEASE.md](TASK15_FINAL_RELEASE.md). The report package also
+includes an architecture diagram, workflow diagram, local portal screenshot,
+machine-readable validation evidence, and the keyboard-navigable
+[viva presentation](TASKS_REPORTS/Task15_Viva_Presentation.html) with a
+[viva/demo guide](TASKS_REPORTS/Task15_Viva_QA.md).
+
+**Release status:** Local Maven tests (17/17) and Selenium journeys (5/5) pass.
+Docker registry publication and remote Ansible provisioning are pending; the
+current Dockerfile and `.dockerignore` are not yet tracked in the inspected
+Git commit, and the Ansible inventory still contains a reserved placeholder.
+See the report for evidence scope and the remaining release gates. A successful
+historical Jenkins run is not evidence that the current Docker pipeline ran.
+
+## Dashboard and DevOps Demonstration
+
+```powershell
+mvn -o package
+java -jar target/municipal-complaint-portal-1.0.0-SNAPSHOT.jar 8085 --demo
+```
+
+Open `http://localhost:8085/`. The demo includes the dashboard, complaint queue,
+submission and tracking pages, interactive DevOps Lab, and all 15 downloadable
+task reports. No Node installation, CDN, or live Jenkins connection is needed.
+
+`--demo` (or `DEMO_MODE=true`) enables 20 synthetic records and local reviewer
+actions. Demo mode requires a loopback bind address and is not authentication.
+Without demo mode, reviewer writes are disabled. The default bind address is
+`127.0.0.1`; the Docker image sets `BIND_ADDRESS=0.0.0.0` for container networking.
+Data and complaint event history are in memory and reset on restart.
+
+The DevOps animations execute no commands. Recorded baseline results retain
+their original capture date and revision; they are not current build results.
+The report downloads are bundled copies; originals in `TASKS_REPORTS/` are
+preserved.
+
+Run verification with `mvn -o test` and `mvn -o verify -Pselenium`. On this
+Windows workspace, an offline ChromeDriver override is available:
+
+```powershell
+mvn -o verify -Pselenium "-Dwebdriver.chrome.driver=C:/Users/Student/.cache/selenium/chromedriver/win64/155.0.8059.84/chromedriver.exe"
+```
 
 ---
 
