@@ -183,4 +183,28 @@ class PortalApiTest {
         assertEquals(405, response.statusCode());
         assertEquals(400, post("/api/complaints", "citizenName=%ZZ").statusCode());
     }
+
+    @Test
+    void formMediaTypeIsExactAndCaseInsensitive() throws Exception {
+        String body = "citizenName=Demo+Citizen&citizenContact=demo%40example.com"
+                + "&category=Roads+%26+Potholes&ward=Ward+07&description=Damaged+road+surface+near+the+school.";
+        for (String type : new String[]{"application/x-www-form-urlencoded-invalid",
+                "Application/X-Www-Form-Urlencoded; charset=UTF-8"}) {
+            HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create(base + "/api/complaints"))
+                    .header("Content-Type", type).POST(HttpRequest.BodyPublishers.ofString(body)).build(),
+                    HttpResponse.BodyHandlers.ofString());
+            assertEquals(type.endsWith("-invalid") ? 415 : 201, response.statusCode(), type);
+        }
+    }
+
+    @Test
+    void rejectsOriginsContainingPathsOrCredentials() throws Exception {
+        for (String origin : new String[]{base + "/not-an-origin", base + "?query=1",
+                base + "#fragment", base.replace("http://", "http://user@")}) {
+            HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create(base + "/api/complaints/status"))
+                    .header("Origin", origin).POST(HttpRequest.BodyPublishers.ofString(
+                            "token=CMP-2026-1001&status=APPROVED")).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(403, response.statusCode(), origin);
+        }
+    }
 }

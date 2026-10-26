@@ -19,15 +19,17 @@ public class ComplaintService {
     private final ValidationService validationService = new ValidationService();
 
     public Complaint submitComplaint(String citizenName, String citizenContact, String category, String ward, String description, String attachmentName) {
-        if (!validationService.validateComplaint(citizenName, citizenContact, category, ward, description)) {
+        String safeName = validationService.sanitizeInput(citizenName);
+        String safeDesc = validationService.sanitizeInput(description);
+        String contact = citizenContact == null ? null : citizenContact.trim();
+        String normalizedCategory = category == null ? null : category.trim();
+        String normalizedWard = ward == null ? null : ward.trim();
+        if (!validationService.validateComplaint(safeName, contact, normalizedCategory, normalizedWard, safeDesc)) {
             throw new IllegalArgumentException("Invalid complaint input data");
         }
 
         String token = "CMP-2026-" + tokenSequence.getAndIncrement();
-        String safeName = validationService.sanitizeInput(citizenName);
-        String safeDesc = validationService.sanitizeInput(description);
-
-        Complaint complaint = new Complaint(token, safeName, citizenContact, category, ward, safeDesc);
+        Complaint complaint = new Complaint(token, safeName, contact, normalizedCategory, normalizedWard, safeDesc);
         if (attachmentName != null && !attachmentName.trim().isEmpty()) {
             complaint.setAttachmentFileName(validationService.sanitizeInput(attachmentName));
         }

@@ -51,6 +51,8 @@ const view = document.querySelector('#view');
 let cleanup = () => {};
 let toastTimer;
 let loadSequence = 0;
+let trackingSequence = 0;
+let detailSequence = 0;
 
 document.querySelectorAll('[data-icon]').forEach(element => { element.innerHTML = icon(element.dataset.icon); });
 
@@ -193,28 +195,39 @@ function trackPage() {
 async function track(token) {
   const output = document.querySelector('#track-res');
   if (!output) return;
+  const sequence = ++trackingSequence;
   state.trackToken = token.trim();
+  output.setAttribute('aria-busy', 'true');
   output.innerHTML = '<div class="loading-state">Looking up your complaint…</div>';
   try {
     const complaint = await api(`/api/complaints/track?token=${encodeURIComponent(state.trackToken)}`);
-    if (!output.isConnected) return;
+    if (!output.isConnected || sequence !== trackingSequence) return;
     output.innerHTML = `<section class="card">${complaintSummary(complaint)}<div class="card-body"><h3>Recorded activity</h3><p class="page-explainer">Actual events in this session—not an inferred lifecycle.</p>${historyMarkup(complaint)}</div></section>`;
   } catch (error) {
-    if (output.isConnected) output.innerHTML = `<div class="notice error" role="alert">${icon('info')}<span>${escapeHtml(error.message)}</span></div>`;
+    if (output.isConnected && sequence === trackingSequence) {
+      output.innerHTML = `<div class="notice error" role="alert">${icon('info')}<span>${escapeHtml(error.message)}</span></div>`;
+    }
+  } finally {
+    if (sequence === trackingSequence) output.removeAttribute('aria-busy');
   }
 }
 
 async function openDetail(token) {
   const dialog = document.querySelector('#complaint-dialog');
-  dialog.innerHTML = '<div class="loading-state">Loading complaint…</div>';
+  const sequence = ++detailSequence;
+  dialog.setAttribute('aria-busy', 'true');
+  dialog.innerHTML = `<div class="dialog-header"><h3 id="detail-title">Complaint details</h3><button class="icon-button" data-close aria-label="Close complaint details">${icon('close')}</button></div><div class="loading-state">Loading complaint...</div>`;
   if (!dialog.open) dialog.showModal();
   try {
     const complaint = await api(`/api/complaints/track?token=${encodeURIComponent(token)}`);
-    if (!dialog.open) return;
+    if (!dialog.open || sequence !== detailSequence) return;
     dialog.innerHTML = `<div class="dialog-header"><h3 id="detail-title">Complaint details</h3><button class="icon-button" data-close aria-label="Close complaint details">${icon('close')}</button></div>${complaintSummary(complaint)}<div class="card-body"><h3>Recorded activity</h3><div class="page-explainer">Updates recorded during this in-memory session.</div>${historyMarkup(complaint)}${complaint.allowedStatuses.length && state.health?.demoMode ? `<form class="review-form" id="review-form" data-token="${escapeHtml(token)}"><div class="notice amber">${icon('info')}<span>Local demo reviewer · not authenticated</span></div><div class="field"><label for="review-status">Next status</label><select id="review-status">${complaint.allowedStatuses.map(status => `<option value="${status}">${statusNames[status]}</option>`).join('')}</select></div><div class="field"><label for="review-remarks">Official remarks</label><textarea id="review-remarks" maxlength="1500" placeholder="Explain the decision. Rejections require at least 5 characters."></textarea></div><button class="button primary" type="submit">${icon('check')}Save status update</button><div id="review-error" class="form-error" role="alert"></div></form>` : `<div class="side-note"><strong>${complaint.allowedStatuses.length ? 'Reviewer actions disabled' : 'Final outcome recorded'}</strong>${complaint.allowedStatuses.length ? 'Start the local application with --demo to enable demonstration actions.' : 'Resolved and rejected complaints cannot be reopened in this demo workflow.'}</div>`}</div>`;
     dialog.querySelector('[data-close]').focus();
   } catch (error) {
+    if (!dialog.open || sequence !== detailSequence) return;
     dialog.innerHTML = `<div class="dialog-header"><h3 id="detail-title">Unable to load complaint</h3><button class="icon-button" data-close aria-label="Close">${icon('close')}</button></div><div class="card-body">${escapeHtml(error.message)}</div>`;
+  } finally {
+    if (sequence === detailSequence) dialog.removeAttribute('aria-busy');
   }
 }
 
@@ -257,6 +270,7 @@ function render() {
 }
 
 window.addEventListener('hashchange', () => {
+  document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
   document.querySelector('#sidebar').classList.remove('open');
   document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false');
   const refresh = ['overview', 'complaints'].includes(location.hash.substring(1) || 'overview');
@@ -270,6 +284,18 @@ window.addEventListener('hashchange', () => {
 document.querySelector('#menu-toggle').addEventListener('click', event => {
   const open = document.querySelector('#sidebar').classList.toggle('open');
   event.currentTarget.setAttribute('aria-expanded', String(open));
+  if (open) document.querySelector('#sidebar [aria-current=page]')?.focus({ preventScroll: true });
+});
+
+document.querySelector('.skip-link').addEventListener('click', event => {
+  event.preventDefault();
+  document.querySelector('#main').focus({ preventScroll: true });
+  document.querySelector('#main').scrollIntoView({ block: 'start' });
+});
+
+document.querySelector('#complaint-dialog').addEventListener('close', event => {
+  detailSequence++;
+  event.currentTarget.removeAttribute('aria-busy');
 });
 
 document.querySelector('#global-search').addEventListener('submit', event => {
@@ -283,12 +309,15 @@ document.querySelector('#global-search').addEventListener('submit', event => {
 
 document.addEventListener('keydown', event => {
   if (event.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]')) {
-    event.preventDefault();
-    document.querySelector('#global-query').focus();
+    const input = document.querySelector('#global-query').offsetParent ? document.querySelector('#global-query') : document.querySelector('#complaint-search');
+    if (input) { event.preventDefault(); input.focus(); }
   }
   if (event.key === 'Escape') {
+    const sidebar = document.querySelector('#sidebar');
+    const restoreFocus = sidebar.classList.contains('open') && sidebar.contains(document.activeElement);
     document.querySelector('#sidebar').classList.remove('open');
     document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false');
+    if (restoreFocus) document.querySelector('#menu-toggle').focus();
   }
 });
 

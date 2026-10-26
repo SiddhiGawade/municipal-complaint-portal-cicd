@@ -357,6 +357,90 @@ class SeleniumComplaintJourneyIT {
         assertEquals("false", driver.findElement(By.id("menu-toggle")).getAttribute("aria-expanded"));
     }
 
+    @Test
+    void skipLinkPreservesTheCurrentPageAndDraft() {
+        driver.get(baseUrl() + "/#submit");
+        driver.findElement(By.id("name")).sendKeys("Unsaved demo citizen");
+        ((JavascriptExecutor) driver).executeScript("document.querySelector('.skip-link').focus()");
+        driver.findElement(By.cssSelector(".skip-link")).sendKeys(Keys.ENTER);
+        assertTrue(driver.getCurrentUrl().endsWith("#submit"));
+        assertEquals("Unsaved demo citizen", driver.findElement(By.id("name")).getAttribute("value"));
+        assertEquals("main", driver.switchTo().activeElement().getAttribute("id"));
+    }
+
+    @Test
+    void latestTrackingLookupWinsWhenResponsesArriveOutOfOrder() {
+        delaySeededTrackingResponse();
+        trackToken("CMP-2026-1001");
+        trackToken("CMP-2026-1002");
+        wait.until(d -> d.findElement(By.id("track-res")).getText().contains("Sunita Kamble"));
+        releaseDelayedResponse();
+        assertTrue(driver.findElement(By.id("track-res")).getText().contains("Sunita Kamble"));
+        assertFalse(driver.findElement(By.id("track-res")).getText().contains("Rahul Deshmukh"));
+    }
+
+    @Test
+    void closedDialogCannotOverwriteANewerComplaintWithAnOldResponse() {
+        driver.get(baseUrl() + "/#complaints");
+        wait.until(d -> d.findElements(By.id("complaint-search")).size() == 1);
+        delaySeededTrackingResponse();
+        driver.findElement(By.id("complaint-search")).sendKeys("CMP-2026-1001");
+        driver.findElement(By.cssSelector("button.token-link")).click();
+        wait.until(d -> (Boolean) ((JavascriptExecutor) d).executeScript(
+                "return document.querySelector('#complaint-dialog').open"));
+        driver.switchTo().activeElement().sendKeys(Keys.ESCAPE);
+        driver.findElement(By.id("complaint-search")).clear();
+        driver.findElement(By.id("complaint-search")).sendKeys("CMP-2026-1002");
+        driver.findElement(By.cssSelector("button.token-link")).click();
+        wait.until(d -> d.findElement(By.id("complaint-dialog")).getText().contains("Sunita Kamble"));
+        releaseDelayedResponse();
+        assertTrue(driver.findElement(By.id("complaint-dialog")).getText().contains("Sunita Kamble"));
+        assertFalse(driver.findElement(By.id("complaint-dialog")).getText().contains("Rahul Deshmukh"));
+    }
+
+    @Test
+    void walkthroughPlayAndPauseRemainKeyboardAccessible() {
+        driver.get(baseUrl() + "/#devops");
+        driver.findElement(By.cssSelector("[data-lab=play]")).click();
+        assertEquals("play", driver.switchTo().activeElement().getAttribute("data-lab"));
+        assertTrue(driver.findElement(By.cssSelector("[data-lab=play]")).getText().contains("Pause"));
+        driver.switchTo().activeElement().sendKeys(Keys.ENTER);
+        assertTrue(driver.findElement(By.cssSelector("[data-lab=play]")).getText().contains("Play"));
+    }
+
+    private void trackToken(String token) {
+        driver.findElement(By.id("track-token")).clear();
+        driver.findElement(By.id("track-token")).sendKeys(token);
+        driver.findElement(By.cssSelector("#track-form button")).click();
+    }
+
+    private void delaySeededTrackingResponse() {
+        ((JavascriptExecutor) driver).executeScript("""
+                window.delayedResponseConsumed = false;
+                const gate = new Promise(resolve => { window.releaseDelayedResponse = resolve; });
+                const originalFetch = window.fetch.bind(window);
+                window.fetch = async (...args) => {
+                    const response = await originalFetch(...args);
+                    if (String(args[0]).includes('/api/complaints/track?token=CMP-2026-1001')) {
+                        await gate;
+                        const parse = response.json.bind(response);
+                        response.json = async () => {
+                            const value = await parse();
+                            setTimeout(() => { window.delayedResponseConsumed = true; }, 0);
+                            return value;
+                        };
+                    }
+                    return response;
+                };
+                """);
+    }
+
+    private void releaseDelayedResponse() {
+        ((JavascriptExecutor) driver).executeScript("window.releaseDelayedResponse()");
+        wait.until(d -> Boolean.TRUE.equals(((JavascriptExecutor) d).executeScript(
+                "return window.delayedResponseConsumed")));
+    }
+
     private static int findFreePort() throws IOException {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();

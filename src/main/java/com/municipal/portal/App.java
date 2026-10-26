@@ -105,7 +105,7 @@ public class App {
                     return;
                 }
                 String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
-                if (contentType != null && !contentType.startsWith("application/x-www-form-urlencoded")) {
+                if (contentType != null && !"application/x-www-form-urlencoded".equalsIgnoreCase(contentType.split(";", 2)[0].trim())) {
                     json(exchange, 415, Map.of("error", "Use form-encoded input"));
                     return;
                 }
@@ -224,6 +224,8 @@ public class App {
         if (origin == null) return true;
         URI uri = URI.create(origin);
         return ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) && uri.getRawAuthority() != null
+                && uri.getRawUserInfo() == null && (uri.getRawPath() == null || uri.getRawPath().isEmpty())
+                && uri.getRawQuery() == null && uri.getRawFragment() == null
                 && uri.getRawAuthority().equalsIgnoreCase(exchange.getRequestHeaders().getFirst("Host"));
     }
 

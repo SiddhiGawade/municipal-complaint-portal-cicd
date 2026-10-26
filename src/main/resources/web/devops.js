@@ -42,6 +42,7 @@ export function renderLab(container, { icon, escapeHtml: e, heading }) {
   let scenario = 'success';
   let timer = null;
   let running = false;
+  let expandedConcepts = null;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const list = () => scenario === 'recovery' ? recoveryStages : stages;
   const stop = () => { clearInterval(timer); timer = null; running = false; };
@@ -112,10 +113,28 @@ export function renderLab(container, { icon, escapeHtml: e, heading }) {
   }
 
   function draw() {
+    const focused = document.activeElement;
+    const focusSelector = container.contains(focused)
+      ? focused.id ? `#${CSS.escape(focused.id)}`
+        : focused.hasAttribute('data-lab') ? `[data-lab="${focused.dataset.lab}"]`
+          : focused.hasAttribute('data-stage') ? `[data-stage="${focused.dataset.stage}"]` : null
+      : null;
+    const concepts = [...container.querySelectorAll('.concept-list details')];
+    if (concepts.length) expandedConcepts = concepts.map(detail => detail.open);
     container.innerHTML = heading('The engineering behind the experience.', 'An interactive guide to this project’s build, test and delivery workflow.')
       + `<section class="lab-intro"><div><div class="eyebrow">DEVOPS LAB / CONNECT THE DOTS</div><h2>From a single commit to a confident release.</h2><p>Explore the pipeline, understand its quality gates and follow the evidence. A practical learning experience—not a simulated production control panel.</p></div><div class="lab-intro-meta"><strong>15 tasks</strong>One complete learning journey<br>Java · Jenkins · Docker · Ansible</div></section><div class="tabs" role="tablist" aria-label="DevOps topics">${[
         ['pipeline', 'workflow', 'Pipeline explorer'], ['architecture', 'layers', 'Architecture'], ['infrastructure', 'box', 'Docker & Ansible'], ['quality', 'shield', 'Quality & evidence'],
       ].map(([key, symbol, title]) => `<button class="tab ${tab === key ? 'active' : ''}" id="tab-${key}" data-tab="${key}" role="tab" aria-selected="${tab === key}" aria-controls="lab-panel" tabindex="${tab === key ? '0' : '-1'}">${icon(symbol)}${title}</button>`).join('')}</div><section id="lab-panel" role="tabpanel" aria-labelledby="tab-${tab}">${({ pipeline: pipelineView, architecture: architectureView, infrastructure: infrastructureView, quality: qualityView }[tab])()}</section>`;
+    if (expandedConcepts) container.querySelectorAll('.concept-list details').forEach((detail, index) => {
+      detail.open = expandedConcepts[index] ?? false;
+    });
+    if (focusSelector) container.querySelector(focusSelector)?.focus({ preventScroll: true });
+    const board = container.querySelector('.pipeline-scroll');
+    const current = container.querySelector(`[data-stage="${selected}"]`);
+    if (board && current && board.scrollWidth > board.clientWidth) {
+      board.scrollLeft = current.getBoundingClientRect().left - board.getBoundingClientRect().left
+        + board.scrollLeft - (board.clientWidth - current.clientWidth) / 2;
+    }
   }
 
   function advance() {

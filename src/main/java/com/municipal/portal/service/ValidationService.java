@@ -35,7 +35,7 @@ public class ValidationService {
 
     public String sanitizeInput(String input) {
         if (input == null) return "";
-        return input.replaceAll("<[^>]*>", "").replace("'", "''").trim();
+        return input.replaceAll("<[^>]*>", "").trim();
     }
 
     public boolean validateComplaint(String name, String contact, String category, String ward, String description) {
